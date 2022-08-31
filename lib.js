@@ -83,7 +83,7 @@ export const getAllConsumProducts = async () => {
       product.priceData.prices[0].value.centAmount.toFixed(2)
     )
     return {
-      id: product.id.toString(),
+      id: product.code,
       name: product.productData.name,
       currentPrice: price,
       supermarket: 'consum',
