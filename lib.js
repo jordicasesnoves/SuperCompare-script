@@ -7,28 +7,36 @@ export const getAllMercadonaProducts = async () => {
     mercadonaCategoriesUrl,
     { headers: { 'Content-Type': 'application/json' } }
   )
-  const mercadonaCategoriesNumbers = []
   const cats = mercadonaCategories.results
-  const allMercadona = []
+  const catsIds = []
   await Promise.all(
     cats.map(async (cat) => {
       await Promise.all(
         cat.categories.map(async (subCat) => {
-          mercadonaCategoriesNumbers.push(subCat.id)
-          const url = `https://tienda.mercadona.es/api/categories/${subCat.id}/?lang=es&wh=vlc1`
-          const { data } = await axios.get(url, {
-            headers: { 'Content-Type': 'application/json' }
-          })
-          const subCatProducts = data.categories.map(
-            (category) => category.products
-          )
-          allMercadona.push(...subCatProducts.flat(2))
+          catsIds.push(subCat.id)
         })
       )
     })
   )
+
+  const allProducts = []
+  await Promise.all(
+    catsIds.map(async (catId) => {
+      const url = `https://7uzjkl1dj0-dsn.algolia.net/1/indexes/products_prod_vlc1_es/query?x-algolia-agent=Algolia%20for%20JavaScript%20(3.35.1)%3B%20Browser&x-algolia-application-id=7UZJKL1DJ0&x-algolia-api-key=9d8f2e39e90df472b4f2e559a116fe17`
+      const { data } = await axios.post(
+        url,
+        `{"params":"query=*&facetFilters=%5B%22categories.categories.id%3A${catId}%22%5D"}`,
+        {
+          headers: { 'Content-Type': 'text/plain' }
+        }
+      )
+      const products = data.hits
+      allProducts.push(...products)
+    })
+  )
+
   let totalTotal = 0
-  const mercadonaPrices = allMercadona.map((product) => {
+  const mercadonaPrices = allProducts.map((product) => {
     const priceParsed = parseFloat(product.price_instructions.unit_price)
     totalTotal = totalTotal + priceParsed
     return {
